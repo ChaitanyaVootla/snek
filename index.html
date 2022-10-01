@@ -1,0 +1,237 @@
+<body>
+    <head><title>SNEK</title></head>
+    <div id="container">
+        <div id="game"></div>
+        <div id="overlay">
+            GAME OVER
+        </div>
+    </div>
+</body>
+
+<script>
+    const rows = 40
+    const columns = 40
+    const directions = {
+        LEFT: 'LEFT',
+        RIGHT: 'RIGHT',
+        UP: 'UP',
+        DOWN: 'DOWN',
+    }
+    const keys = {
+        38: 'UP',
+        40: 'DOWN',
+        37: 'LEFT',
+        39: 'RIGHT',
+    }
+    let snake = {
+        direction: directions.RIGHT,
+        isMoving: false,
+        body: [
+            {
+                x: columns/2,
+                y: rows/2,
+            },
+        ],
+        size: 1,
+        grow: false,
+        growLoc: ``,
+        gemStack: {},
+    }
+    let fps = 10
+    let gameState = {
+        gem: {
+            x: 0,
+            y: 0,
+        }
+    }
+    let cells = []
+    let gameLoop
+    const createGrid = () => {
+        const game = document.getElementById("game")
+        for (let x = 0; x < rows; x++) {
+            for (let y = 0; y < columns; y++) {
+                const element = document.createElement('cell')
+                element.setAttribute('id', `${y}-${x}`)
+                cells.push({x, y})
+                game.appendChild(element);
+            }
+        }
+        game.style = `grid-template-columns: repeat(${columns}, 1fr)`
+    }
+    const getCell = (x, y) => document.getElementById(`${x}-${y}`)
+    const getCellByString = (str) => document.getElementById(str)
+    const reset = () => {
+        const cells = document.getElementsByTagName('cell')
+        for (var i = 0, cell; cell = cells[i++];)
+            cell.setAttribute('class', 'asd')
+    }
+    const drawSnake = () => {
+        snake.body.forEach(
+            ({x, y}) => getCell(x, y).setAttribute('class', 'snake')
+        )
+    }
+    const setListeners = () => {
+        const handleKey = ({keyCode}) => {
+            if (!snake.isMoving) {
+                snake.isMoving = true
+            }
+            const key = keys[keyCode]
+            switch(key) {
+                case directions.UP:
+                    if (snake.direction != directions.DOWN)
+                        snake.direction = directions.UP
+                    break
+                case directions.DOWN:
+                    if (snake.direction != directions.UP)
+                        snake.direction = directions.DOWN
+                    break
+                case directions.LEFT:
+                    if (snake.direction != directions.RIGHT)
+                        snake.direction = directions.LEFT
+                    break
+                case directions.RIGHT:
+                    if (snake.direction != directions.LEFT)
+                        snake.direction = directions.RIGHT
+                    break
+            }
+        }
+        document.onkeydown = handleKey
+    }
+    const moveSnake = () => {
+        if (!snake.isMoving) return
+        let prevTrack = {
+            x: snake.body[0].x,
+            y: snake.body[0].y
+        }
+        switch(directions[snake.direction]) {
+            case directions.UP:
+                snake.body[0].y -= 1
+                break
+            case directions.DOWN:
+                snake.body[0].y += 1
+                break
+            case directions.LEFT:
+                snake.body[0].x -= 1
+                break
+            case directions.RIGHT:
+                snake.body[0].x += 1
+                break
+        }
+        for (let i = 1; i < snake.body.length; i++) {
+            let tempTrack = {...snake.body[i]}
+            snake.body[i] = {...prevTrack}
+            prevTrack = tempTrack
+        }
+        if (snake.grow) {
+            growSnake()
+        }
+        checkCollision()
+        ingestGem()
+    }
+    const growSnake = () => {
+    snake.grow = false
+    snake.size += 1
+    snake.body.push({
+        x: snake.growLoc.split('-')[0],
+        y: snake.growLoc.split('-')[1],
+    })
+    }
+    const resetGem = () => {
+        const randomCell = cells[Math.floor(Math.random() * cells.length)];
+        gameState.gem = randomCell
+    }
+    const startGameLoop = () => {
+        gameLoop = setInterval(() => {
+            try {
+                draw()
+            } catch (e) {
+                gameOver()
+            }
+            moveSnake()
+        }, 1000/fps)
+    }
+    const ingestGem = () => {
+        if (snake.body[0].x === gameState.gem.x && snake.body[0].y === gameState.gem.y) {
+            snake.gemStack[`${gameState.gem.x}-${gameState.gem.y}`] = true
+            resetGem()
+        }
+        Object.keys(snake.gemStack).forEach(
+            gemStr => {
+                if (snake.body[snake.body.length - 1].x == gemStr.split('-')[0] &&
+                    snake.body[snake.body.length - 1].y == gemStr.split('-')[1]) {
+                    delete snake.gemStack[gemStr]
+                    snake.grow = true
+                    snake.growLoc = gemStr
+                }
+            }
+        )
+    }
+    const showOverlay = () => {
+        document.getElementById('overlay').style = 'display: flex'
+    }
+    const gameOver = () => {
+        clearInterval(gameLoop)
+        showOverlay()
+    }
+    const checkCollision = () => {
+        const head = snake.body[0]
+        for (let i = 1; i < snake.body.length; i++) {
+            if (snake.body[i].x === head.x && snake.body[i].y === head.y) {
+                gameOver()
+            }
+        }
+    }
+    const drawGem = () => {
+        const gem = getCell(gameState.gem.x, gameState.gem.y)
+        gem.setAttribute('class', 'gem')
+    }
+    const draw = () => {
+        reset()
+        drawGem()
+        drawSnake()
+    }
+    const play = () => {
+        createGrid()
+        setListeners()
+        resetGem()
+        startGameLoop()
+    }
+    play()
+</script>
+
+<style>
+    body {
+        background-color: grey;
+    }
+    #container {
+        position: relative;
+        display: flex;
+        justify-content: center;
+    }
+    #game {
+        background-color: rgb(46, 46, 46);
+        text-align: center;
+        display: grid;
+        height: 700px;
+        width: 700px;
+        border: 5px solid red;
+    }
+    #overlay {
+        position: absolute;
+        display: none;
+        background-color: rgba(0, 0, 0, 0.5);
+        width: 100%;
+        height: 100%;
+        z-index: 10;
+        text-align: center;
+        justify-content: center;
+        align-items: center;
+        font-size: 3rem;
+    }
+    cell.snake {
+        background-color: greenyellow;
+    }
+    cell.gem {
+        background-color: purple;
+    }
+</style>
