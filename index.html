@@ -15,7 +15,7 @@
             <div class="external-links-container">
                 <a class="external-link" href="https://github.com/ChaitanyaVootla/snek" target="_blank">
                     <img src="github.png"/>
-                    Visit GitHub for code
+                    Click here for code
                 </a>
             </div>
         </div>
@@ -25,7 +25,7 @@
 <script>
     const rows = 40
     const columns = 40
-    const snakeStartLength = 1
+    const snakeStartLength = 2
     let score = 0
     const directions = {
         LEFT: 'LEFT',
@@ -100,6 +100,11 @@
         )
         getCell(snake.body[0].x, snake.body[0].y).setAttribute('class', 'snake head')
         getCell(snake.body[snake.body.length - 1].x, snake.body[snake.body.length - 1].y).setAttribute('class', 'snake tail')
+    }
+    const drawIngestGems = () => {
+        Object.keys(snake.gemStack).forEach(
+            (gemStr) => getCell(gemStr.split('-')[0], gemStr.split('-')[1]).setAttribute('class', 'snake ingestGem')
+        )
     }
     const setListeners = () => {
         const handleKey = ({keyCode}) => {
@@ -255,6 +260,7 @@
         reset()
         drawGem()
         drawSnake()
+        drawIngestGems()
         updateScore()
     }
     const play = () => {
@@ -304,6 +310,10 @@
     }
     cell.snake {
         background-color: #382f11;
+        border-radius: 3px;
+    }
+    cell.snake.ingestGem {
+        background-color: #957b25;
         border-radius: 3px;
     }
     #game[paused="true"] cell.snake {
@@ -363,7 +373,8 @@
     .external-link {
         display: flex;
         flex-direction: column;
-        color: black !important;
+        color: white !important;
+        text-decoration: none;
     }
     .external-link img {
         height: 50px;
