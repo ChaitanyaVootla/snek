@@ -103,6 +103,7 @@
     }
     const setListeners = () => {
         const handleKey = ({keyCode}) => {
+            if (!Object.keys(keys).includes(`${keyCode}`)) return
             if (!snake.isMoving) {
                 snake.isMoving = true
             }
