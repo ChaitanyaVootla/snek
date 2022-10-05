@@ -1,20 +1,36 @@
 <body>
     <head>
         <title>SNEK</title>
-        <link rel="icon" href="favicon.ico">
+        <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet">
+        <link href="https://unpkg.com/nes.css/css/nes.css" rel="stylesheet" />
     </head>
     <div id="container">
-        <div id="game"></div>
-        <div id="overlay"></div>
+        <div class="game-container">
+            <div id="game"></div>
+            <div id="overlayGameOver" class="overlay">
+                <div>
+                    <button type="button" class="nes-btn is-error">Game Over</button>
+                    <br/>
+                    refresh to play again
+                </div>
+            </div>
+            <div id="overlayPause" class="overlay">
+                <div>
+                    <button type="button" class="nes-btn">Paused</button>
+                    <br/>
+                    Press any key to continue
+                </div>
+            </div>
+        </div>
     </div>
     <div id="info-container">
         <div class="info">
-            <div id="title">SNEK</div>
+            <div id="title"><i class="snes-jp-logo"></i> SNEK</div>
             <div id="score"></div>
             <div id="stats"></div>
             <div class="external-links-container">
                 <a class="external-link" href="https://github.com/ChaitanyaVootla/snek" target="_blank">
-                    <img src="github.png"/>
+                    <i class="nes-octocat animate"></i>
                     Click here for code
                 </a>
             </div>
@@ -54,8 +70,9 @@
         ],
         size: 1,
         grow: false,
-        growLoc: ``,
-        gemStack: {},
+        growLoc: {},
+        gemStack: [],
+        keyProcessing: false,
     }
     for (let i = 1; i <= snakeStartLength; i++) {
         snake.body.push({
@@ -64,7 +81,6 @@
         })
     }
     let fps = 10
-    let frameTime = 1000/fps
     let gameState = {
         gem: {
             x: 0,
@@ -102,9 +118,7 @@
         getCell(snake.body[snake.body.length - 1].x, snake.body[snake.body.length - 1].y).setAttribute('class', 'snake tail')
     }
     const drawIngestGems = () => {
-        Object.keys(snake.gemStack).forEach(
-            (gemStr) => getCell(gemStr.split('-')[0], gemStr.split('-')[1]).setAttribute('class', 'snake ingestGem')
-        )
+        snake.gemStack.forEach((gem) => getCell(gem.x, gem.y).setAttribute('class', 'snake ingestGem'))
     }
     const setListeners = () => {
         const handleKey = ({keyCode}) => {
@@ -118,6 +132,7 @@
                 startGameLoop()
                 removeOverlay()
             }
+            if (snake.keyProcessing) return
             const key = keys[keyCode]
             switch(key) {
                 case directions.UP:
@@ -140,6 +155,7 @@
                     pauseGame()
                     break
             }
+            snake.keyProcessing = true
         }
         document.onkeydown = handleKey
     }
@@ -173,13 +189,14 @@
         }
         checkCollision()
         ingestGem()
+        snake.keyProcessing = false
     }
     const growSnake = () => {
         snake.grow = false
         snake.size += 1
         snake.body.push({
-        x: snake.growLoc.split('-')[0],
-        y: snake.growLoc.split('-')[1],
+        x: snake.growLoc.x,
+        y: snake.growLoc.y,
     })
     }
     const resetGem = () => {
@@ -203,38 +220,45 @@
     }
     const ingestGem = () => {
         if (snake.body[0].x === gameState.gem.x && snake.body[0].y === gameState.gem.y) {
-            snake.gemStack[`${gameState.gem.x}-${gameState.gem.y}`] = true
+            snake.gemStack.push({
+                x: gameState.gem.x,
+                y: gameState.gem.y,
+            })
             resetGem()
             score += 1
         }
-        Object.keys(snake.gemStack).forEach(
-            gemStr => {
-                if (snake.body[snake.body.length - 1].x == gemStr.split('-')[0] &&
-                    snake.body[snake.body.length - 1].y == gemStr.split('-')[1]) {
-                    delete snake.gemStack[gemStr]
+        snake.gemStack.forEach(
+            (gem, index) => {
+                if (snake.body[snake.body.length - 1].x == gem.x &&
+                    snake.body[snake.body.length - 1].y == gem.y) {
+                    snake.gemStack.splice(index, 1)
                     snake.grow = true
-                    snake.growLoc = gemStr
+                    snake.growLoc = gem
                 }
             }
         )
     }
-    const showOverlay = (text) => {
-        const overlayDoc = document.getElementById('overlay')
+    const showOverlay = (isGameOver) => {
+        clearInterval(gameLoop)
         gameState.isRunning = false
         document.getElementById('game').setAttribute('paused', 'true')
-        overlayDoc.innerHTML = text
+        let overlayDoc
+        if (isGameOver) {
+            overlayDoc = document.getElementById('overlayGameOver')
+        } else {
+            overlayDoc = document.getElementById('overlayPause')
+        }
         overlayDoc.style = 'display: flex'
     }
     const gameOver = () => {
-        clearInterval(gameLoop)
-        showOverlay('Game Over, refresh to play again')
+        showOverlay(true)
     }
     const pauseGame = () => {
-        clearInterval(gameLoop)
-        showOverlay('Paused, Press any key to continue')
+        showOverlay(false)
     }
     const removeOverlay = () => {
-        document.getElementById('overlay').style = 'display: none'
+        document.getElementById('overlayPause').style = 'display: none'
+        document.getElementById('overlayGameOver').style = 'display: none'
     }
     const checkCollision = () => {
         const head = snake.body[0]
@@ -275,8 +299,8 @@
 
 <style>
     body {
-        background-color: #323a5e;
-        font-family: 'Courier New', Courier, monospace;
+        background-color: 	#73A9AD;
+        font-family: 'Press Start 2P', cursive;
         font-weight: 600;
     }
     #container {
@@ -285,14 +309,19 @@
         justify-content: center;
     }
     #game {
-        background-color: #789804;
+        background-color: #D5ECC2;
         text-align: center;
         display: grid;
         border: 5px solid rgb(255, 255, 255);
         border-radius: 5px;
     }
-    #overlay {
+    .game-container {
+        position: relative;
+        margin-top: 2rem;
+    }
+    .overlay {
         position: absolute;
+        top: 0;
         display: none;
         background-color: rgba(0, 0, 0, 0.5);
         width: 100%;
@@ -309,11 +338,12 @@
         width: 15px;
     }
     cell.snake {
-        background-color: #382f11;
+        background-color: #3d3d3d;
         border-radius: 3px;
     }
     cell.snake.ingestGem {
-        background-color: #957b25;
+        background-color: gold;
+        border: 2px solid black;
         border-radius: 3px;
     }
     #game[paused="true"] cell.snake {
@@ -321,7 +351,7 @@
     }
     @keyframes flickerAnimation {
         0%   { opacity:1; }
-        50%  { opacity:0.5; }
+        50%  { opacity:0.2; }
         100% { opacity:1; }
     }
     cell.snake.head {
@@ -329,11 +359,12 @@
         border-radius: 7px;
     }
     cell.snake.tail {
-        background-color: #57491b;
+        background-color: #3d3d3dcc;
     }
     cell.gem {
         background-color: gold;
         border-radius: 7px;
+        border: 2px solid black;
         animation: gemAnimation .5s infinite;
     }
     @keyframes gemAnimation {
@@ -345,7 +376,7 @@
         display: flex;
         padding-top: 1rem;
         justify-content: center;
-        font-size: 1.7rem;
+        font-size: 1.2rem;
     }
     .info {
         display: flex;
@@ -354,7 +385,7 @@
         justify-content: center;
     }
     #title {
-        font-size: 3rem;
+        font-size: 2rem;
     }
     #score {
         padding-top: 1rem;
@@ -368,13 +399,14 @@
         margin-top: 3rem;
         display: flex;
         justify-content: center;
-        font-size: 1rem
+        font-size: 0.8rem
     }
     .external-link {
         display: flex;
         flex-direction: column;
         color: white !important;
         text-decoration: none;
+        align-items: center;
     }
     .external-link img {
         height: 50px;
