@@ -4,9 +4,12 @@
         <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet">
         <link href="https://unpkg.com/nes.css/css/nes.css" rel="stylesheet" />
     </head>
+    <div class="heading flex">
+        <div id="title"><i class="snes-jp-logo"></i> SNEK</div>
+    </div>
     <div id="container">
         <div class="game-container">
-            <div id="game"></div>
+            <div id="game" class="killbox"></div>
             <div id="overlayGameOver" class="overlay">
                 <div>
                     <button type="button" class="nes-btn is-error">Game Over</button>
@@ -25,9 +28,16 @@
     </div>
     <div class="info-container">
         <div class="info">
-            <div id="title"><i class="snes-jp-logo"></i> SNEK</div>
             <div id="score"></div>
-            <div id="stats"></div>
+            <div class="options flex">
+                <div class="nes-badge">
+                    <span class="is-dark">Options</span>
+                </div>
+                <label>
+                    <input type="checkbox" class="nes-checkbox" checked onchange="toggleKillBox()"/>
+                    <span>Kill Box</span>
+                </label>
+            </div>
             <div class="external-links-container">
                 <a class="external-link" href="https://github.com/ChaitanyaVootla/snek" target="_blank">
                     <i class="nes-octocat animate"></i>
@@ -43,6 +53,9 @@
     const columns = 50
     const snakeStartLength = 2
     let score = 0
+    const options = {
+        enableKillBox: true,
+    }
     const gemSound = 'https://cdn.pixabay.com/download/audio/2022/03/20/audio_911556fb62.mp3?filename=coin-pickup-98269.mp3'
     const directions = {
         LEFT: 'LEFT',
@@ -121,6 +134,14 @@
     const drawIngestGems = () => {
         snake.gemStack.forEach((gem) => getCell(gem.x, gem.y).setAttribute('class', 'snake ingestGem'))
     }
+    const toggleKillBox = () => {
+        if (options.enableKillBox) {
+            document.getElementById('game').setAttribute('class', '')
+        } else {
+            document.getElementById('game').setAttribute('class', 'killbox')
+        }
+        options.enableKillBox = !options.enableKillBox
+    }
     const setListeners = () => {
         const handleKey = ({keyCode}) => {
             if (!Object.keys(keys).includes(`${keyCode}`)) return
@@ -153,7 +174,7 @@
                         snake.direction = directions.RIGHT
                     break
                 case controls.ESC:
-                    pauseGame()
+                    showOverlay(false)
                     break
             }
             snake.keyProcessing = true
@@ -169,15 +190,35 @@
         switch(directions[snake.direction]) {
             case directions.UP:
                 snake.body[0].y -= 1
+                if (options.enableKillBox)
+                    break
+                if (snake.body[0].y < 0) {
+                    snake.body[0].y = rows - 1
+                }
                 break
             case directions.DOWN:
                 snake.body[0].y += 1
+                if (options.enableKillBox)
+                    break
+                if (snake.body[0].y >= rows) {
+                    snake.body[0].y = 0
+                }
                 break
             case directions.LEFT:
                 snake.body[0].x -= 1
+                if (options.enableKillBox)
+                    break
+                if (snake.body[0].x < 0) {
+                    snake.body[0].x = columns - 1
+                }
                 break
             case directions.RIGHT:
                 snake.body[0].x += 1
+                if (options.enableKillBox)
+                    break
+                if (snake.body[0].x >= columns) {
+                    snake.body[0].x = 0
+                }
                 break
         }
         for (let i = 1; i < snake.body.length; i++) {
@@ -196,9 +237,9 @@
         snake.grow = false
         snake.size += 1
         snake.body.push({
-        x: snake.growLoc.x,
-        y: snake.growLoc.y,
-    })
+            x: snake.growLoc.x,
+            y: snake.growLoc.y,
+        })
     }
     const resetGem = () => {
         const availableCells = cells.filter(
@@ -214,7 +255,7 @@
             try {
                 draw()
             } catch (e) {
-                gameOver()
+                showOverlay(true)
             }
             moveSnake()
         }, 1000/fps)
@@ -253,12 +294,6 @@
         }
         overlayDoc.style = 'display: flex'
     }
-    const gameOver = () => {
-        showOverlay(true)
-    }
-    const pauseGame = () => {
-        showOverlay(false)
-    }
     const removeOverlay = () => {
         document.getElementById('overlayPause').style = 'display: none'
         document.getElementById('overlayGameOver').style = 'display: none'
@@ -267,7 +302,7 @@
         const head = snake.body[0]
         for (let i = 1; i < snake.body.length; i++) {
             if (snake.body[i].x === head.x && snake.body[i].y === head.y) {
-                gameOver()
+                showOverlay(true)
             }
         }
     }
@@ -311,12 +346,27 @@
         display: flex;
         justify-content: center;
     }
+    .flex {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+    }
+    .heading {
+        margin-top: 1rem;
+    }
+    .options {
+        flex-direction: column;
+        margin-top: 1rem;
+    }
     #game {
         background-color: #D5ECC2;
         text-align: center;
         display: grid;
-        border: 5px solid #fbb0b0;
         border-radius: 5px;
+    }
+    #game.killbox {
+        border: 5px solid #fbb0b0;
     }
     .game-container {
         position: relative;
