@@ -18,12 +18,12 @@
                 <div>
                     <button type="button" class="nes-btn">Paused</button>
                     <br/>
-                    Press any key to continue
+                    Press any arrow to continue
                 </div>
             </div>
         </div>
     </div>
-    <div id="info-container">
+    <div class="info-container">
         <div class="info">
             <div id="title"><i class="snes-jp-logo"></i> SNEK</div>
             <div id="score"></div>
@@ -39,10 +39,11 @@
 </body>
 
 <script>
-    const rows = 40
-    const columns = 40
+    const rows = 50
+    const columns = 50
     const snakeStartLength = 2
     let score = 0
+    const gemSound = 'https://cdn.pixabay.com/download/audio/2022/03/20/audio_911556fb62.mp3?filename=coin-pickup-98269.mp3'
     const directions = {
         LEFT: 'LEFT',
         RIGHT: 'RIGHT',
@@ -93,10 +94,10 @@
     let gameLoop
     const createGrid = () => {
         const game = document.getElementById("game")
-        for (let x = 0; x < rows; x++) {
-            for (let y = 0; y < columns; y++) {
+        for (let y = 0; y < rows; y++) {
+            for (let x = 0; x < columns; x++) {
                 const element = document.createElement('cell')
-                element.setAttribute('id', `${y}-${x}`)
+                element.setAttribute('id', `${x}-${y}`)
                 cells.push({x, y})
                 game.appendChild(element);
             }
@@ -224,6 +225,8 @@
                 x: gameState.gem.x,
                 y: gameState.gem.y,
             })
+            const welcomeSound = new Audio(gemSound)
+            welcomeSound.play()
             resetGem()
             score += 1
         }
@@ -294,7 +297,7 @@
         resetGem()
         draw()
     }
-    play()
+    window.onload = () => play()
 </script>
 
 <style>
@@ -312,7 +315,7 @@
         background-color: #D5ECC2;
         text-align: center;
         display: grid;
-        border: 5px solid rgb(255, 255, 255);
+        border: 5px solid #fbb0b0;
         border-radius: 5px;
     }
     .game-container {
@@ -323,7 +326,8 @@
         position: absolute;
         top: 0;
         display: none;
-        background-color: rgba(0, 0, 0, 0.5);
+        background-color: rgba(0, 0, 0, 0.2);
+        border-radius: 5px;
         width: 100%;
         height: 100%;
         z-index: 10;
@@ -372,9 +376,9 @@
         50%  { opacity:0.7; }
         100% { opacity:1; }
     }
-    #info-container {
+    .info-container {
         display: flex;
-        padding-top: 1rem;
+        margin-top: 3rem;
         justify-content: center;
         font-size: 1.2rem;
     }
@@ -408,8 +412,7 @@
         text-decoration: none;
         align-items: center;
     }
-    .external-link img {
-        height: 50px;
+    .external-link i {
         object-fit: contain;
         margin-bottom: 1rem;
     }
